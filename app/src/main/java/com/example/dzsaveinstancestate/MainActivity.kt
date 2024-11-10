@@ -14,12 +14,12 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 
 class MainActivity : AppCompatActivity() {
-    lateinit var userViewModel: UserViewModel
+    private lateinit var userViewModel: UserViewModel
     private lateinit var toolbarMain: Toolbar
-    val users: MutableList<User> = mutableListOf()
     private lateinit var nameET: EditText
     private lateinit var ageET: EditText
     private lateinit var saveBTN: Button
@@ -44,12 +44,17 @@ class MainActivity : AppCompatActivity() {
         nameET = findViewById(R.id.nameET)
         ageET = findViewById(R.id.ageET)
         saveBTN = findViewById(R.id.saveBTN)
+        listUsersLV = findViewById(R.id.listUsersLV)
 
         userViewModel= ViewModelProvider(this)[UserViewModel::class.java]
 
-        listUsersLV = findViewById(R.id.listUsersLV)
-        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, users)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, userViewModel.users)
         listUsersLV.adapter = adapter
+
+        userViewModel.listUser.observe(this, Observer { it ->
+            val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, it)
+            adapter.notifyDataSetChanged()
+        })
 
         saveBTN.setOnClickListener {
             if (nameET.text.isEmpty() ||
@@ -59,11 +64,12 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(this, "Данные введены некорректно!", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            users.add(User(nameET.text.toString(), ageET.text.toString().toInt()))
+            userViewModel.addUser(User(nameET.text.toString(), ageET.text.toString().toInt()))
             adapter.notifyDataSetChanged()
             nameET.text.clear()
             ageET.text.clear()
         }
+
 
 
         listUsersLV.onItemClickListener =
@@ -74,6 +80,7 @@ class MainActivity : AppCompatActivity() {
             }
 
     }
+
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_main,menu)
         return true
